@@ -245,6 +245,59 @@ with col6:
 
 st.markdown("<hr style='margin-top: 2rem; margin-bottom: 2rem;'>", unsafe_allow_html=True)
 
+# ==========================================
+# 8. INFORMASI / INSIGHT PENTING
+# ==========================================
+st.markdown("### 8. Ringkasan Insight & Temuan Penting")
+
+if not df_selection.empty:
+    # Insight 1: Wilayah dengan Penjualan Terbaik
+    best_region = df_selection.groupby('wilayah')['Penjualan'].sum().idxmax()
+    best_region_sales = df_selection.groupby('wilayah')['Penjualan'].sum().max()
+    
+    # Insight 2: Produk Paling Menguntungkan
+    best_product = df_selection.groupby('nama_produk')['keuntungan'].sum().idxmax()
+    best_product_profit = df_selection.groupby('nama_produk')['keuntungan'].sum().max()
+    
+    # Insight 3: Pengaruh Diskon terhadap Profit (Korelasi)
+    if 'diskon' in df_selection.columns and df_selection['diskon'].nunique() > 1:
+        corr_discount_profit = df_selection['diskon'].corr(df_selection['keuntungan'])
+        if pd.isna(corr_discount_profit):
+            discount_insight = "Data diskon seragam, tidak dapat menyimpulkan pengaruhnya terhadap keuntungan."
+        elif corr_discount_profit < -0.1:
+            discount_insight = "Terdapat **korelasi negatif** yang cukup jelas. Artinya, semakin tinggi diskon yang diberikan, keuntungan cenderung **menurun** atau memicu kerugian."
+        elif corr_discount_profit > 0.1:
+            discount_insight = "Terdapat **korelasi positif**. Pemberian diskon terbukti mampu mendongkrak keuntungan secara keseluruhan."
+        else:
+            discount_insight = "Tidak terlihat pengaruh linier yang signifikan antara besaran diskon dan keuntungan yang didapat."
+    else:
+        discount_insight = "Data diskon tidak cukup bervariasi untuk menyimpulkan korelasinya dengan keuntungan."
+
+    # Insight 4: Segmen Pelanggan Paling Menguntungkan
+    best_segment = df_selection.groupby('segmen')['keuntungan'].sum().idxmax()
+    best_segment_profit = df_selection.groupby('segmen')['keuntungan'].sum().max()
+    
+    # Insight 5: Kategori Produk Paling Sering Diretur
+    retur_df = df_selection[df_selection['Returned'] == 'Yes']
+    if not retur_df.empty:
+        worst_return_cat = retur_df.groupby('Kategori_produk').size().idxmax()
+        worst_return_count = retur_df.groupby('Kategori_produk').size().max()
+        return_insight = f"Kategori **{worst_return_cat}** mencatat pengembalian barang terbanyak ({worst_return_count} pesanan diretur)."
+    else:
+        return_insight = "Tidak ada riwayat retur barang pada filter saat ini."
+
+    st.info(f'''
+    Berdasarkan data yang difilter saat ini, berikut adalah 5 temuan utama:
+    
+    1. **Wilayah Penjualan Terbaik**: Wilayah **{best_region}** mendominasi dengan total penjualan tertinggi mencapai **${best_region_sales:,.0f}**.
+    2. **Produk Paling Menguntungkan**: Produk **{best_product}** merupakan kontributor profit terbesar dengan total keuntungan **${best_product_profit:,.0f}**.
+    3. **Segmen Pelanggan Terbaik**: Segmen **{best_segment}** memberikan total keuntungan tertinggi sebesar **${best_segment_profit:,.0f}**.
+    4. **Analisis Barang Retur**: {return_insight}
+    5. **Pengaruh Diskon terhadap Keuntungan**: {discount_insight}
+    ''')
+
+st.markdown("<hr style='margin-top: 2rem; margin-bottom: 2rem;'>", unsafe_allow_html=True)
+
 # ---- Data Table ----
 st.markdown("### Detail Data Transaksi")
 kolom_penting = ['id_pemesanan', 'tanggal_pemesanan', 'nama_pelanggan', 'wilayah', 'nama_produk', 'Kategori_produk', 'Penjualan', 'keuntungan', 'Status Profit']
